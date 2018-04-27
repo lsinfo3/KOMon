@@ -1,0 +1,49 @@
+From f79168d41c8def3c1855dfa3ef7381a5e6ef2782 Mon Sep 17 00:00:00 2001
+From: root <root@vnf-monitoring2.novalocal>
+Date: Tue, 17 Apr 2018 18:24:11 +0200
+<<<<<<< HEAD
+Subject: [PATCH] Modifications required for monitoring UDP packet
+=======
+Subject: [PATCH] [PATCH] Modifications required for monitoring UDP packet
+>>>>>>> 1230237a9d3f00d2d9d8bda81f09dc6b97dabe18
+ processing times
+
+---
+ net/ipv4/udp.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/net/ipv4/udp.c b/net/ipv4/udp.c
+index ea6e4cf..32f3bf8 100644
+--- a/net/ipv4/udp.c
++++ b/net/ipv4/udp.c
+@@ -131,6 +131,9 @@ EXPORT_SYMBOL(sysctl_udp_wmem_min);
+ atomic_long_t udp_memory_allocated;
+ EXPORT_SYMBOL(udp_memory_allocated);
+ 
++int (*__udp4_lib_rcv_ptr)(struct sk_buff *, struct udp_table *, int);
++EXPORT_SYMBOL(__udp4_lib_rcv_ptr);
++
+ #define MAX_UDP_PORTS 65536
+ #define PORTS_PER_CHAIN (MAX_UDP_PORTS / UDP_HTABLE_SIZE_MIN)
+ 
+@@ -2104,7 +2107,7 @@ void udp_v4_early_demux(struct sk_buff *skb)
+ 
+ int udp_rcv(struct sk_buff *skb)
+ {
+-	return __udp4_lib_rcv(skb, &udp_table, IPPROTO_UDP);
++        return (*__udp4_lib_rcv_ptr)(skb, &udp_table, IPPROTO_UDP);
+ }
+ 
+ void udp_destroy_sock(struct sock *sk)
+@@ -2665,6 +2668,8 @@ void __init udp_init(void)
+ 	sysctl_udp_rmem_min = SK_MEM_QUANTUM;
+ 	sysctl_udp_wmem_min = SK_MEM_QUANTUM;
+ 
++	__udp4_lib_rcv_ptr = __udp4_lib_rcv;
++
+ 	/* 16 spinlocks per cpu */
+ 	udp_busylocks_log = ilog2(nr_cpu_ids) + 4;
+ 	udp_busylocks = kmalloc(sizeof(spinlock_t) << udp_busylocks_log,
+-- 
+2.7.4
+
