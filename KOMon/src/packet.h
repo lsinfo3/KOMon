@@ -5,7 +5,6 @@
 #include <linux/module.h>
 #include <linux/time.h>
 #include <linux/ktime.h>
-#include "hash.h"
 
 // Struct that represents a single packet
 typedef struct {
