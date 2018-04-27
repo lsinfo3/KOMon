@@ -21,9 +21,9 @@ echo $samplesize > /proc/vnfinfo_udp
 
 # Start the vnf
 if [[ $artificial_delay -eq 0 ]]; then
-	~/2017-kernel-based-processing-times/code/dummy-vnf/udp-mirror -s $samplesize -f -p $pps -b $packetsize -i $interval -w "VNF_${pps}pps_${packetsize}byte_${interval}_0_${maxi}_${samplesize}.log" &
+        ../example_vnf/udp-mirror -s $samplesize -f -p $pps -b $packetsize -i $interval -w "VNF_${pps}pps_${packetsize}byte_${interval}_0_${maxi}_${samplesize}.log" &
 else
-	~/2017-kernel-based-processing-times/code/dummy-vnf/udp-mirror -s $samplesize -d ${artificial_delay} -p $pps -b $packetsize -i $interval -w "VNF_${pps}pps_${packetsize}byte_${interval}_${artificial_delay}_${maxi}_${samplesize}.log"	&
+	../example_vnf/udp-mirror -s $samplesize -d ${artificial_delay} -p $pps -b $packetsize -i $interval -w "VNF_${pps}pps_${packetsize}byte_${interval}_${artificial_delay}_${maxi}_${samplesize}.log"	&
 fi
 
 # Wait a little for good measure
@@ -35,7 +35,7 @@ while [[ $maxi -eq -1 ]] || [[ $i -le $maxi ]]; do
 	if [[ $res != *"ACTIVE"* ]]; then
 		echo "$i;$((16#$(cat /proc/net/udp | grep 0:04D2 | awk '{ print $5 }' | cut -d':' -f2)))" >> "BUFFER_${pps}pps_${packetsize}byte_${interval}_${artificial_delay}_${maxi}_${samplesize}.log"
 		echo start > /proc/vnfinfo_udp
-		~/2017-kernel-based-processing-times/scripts/monitor_vnf.sh # This sends SIGUSR1 to the vnf and triggers a sample of $samplesize
+		./monitor_vnf.sh # This sends SIGUSR1 to the vnf and triggers a sample of $samplesize
 	fi
 	# sleep $(python -c "import numpy; print numpy.random.exponential(scale=$interval)")
 	sleep "$interval"s
