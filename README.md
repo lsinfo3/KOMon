@@ -6,6 +6,7 @@ Kernel-based online monitoring of VNF packet processing times
 
 KOMon is a tool developed to characterize and monitor the packet processing times of softwareized network functions by performing in-stack monitoring. In-stack monitoring leverages the network stack of the platform it is deployed on to monitor packets with high accuracy and low overhead.
 
+![KOMon Architecture](resources/architecture.png)
 ---
 
 This repository contains the codebase of KOMon itself, the dummy network function used during development and evaluation of the tool as well as the measurement data obtained during the evaluation process.
