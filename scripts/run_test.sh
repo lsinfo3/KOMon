@@ -7,6 +7,8 @@ interval=${3:-1}
 pps=${4:-NAs}
 packetsize=${5:-NA}
 artificial_delay=${6:-0}
+rand=${7:-0}
+rep=$8
 
 # In total N = maxi x samplesize are going to be sampled
 
@@ -21,24 +23,32 @@ echo $samplesize > /proc/vnfinfo_udp
 
 # Start the vnf
 if [[ $artificial_delay -eq 0 ]]; then
-        ../example_vnf/udp-mirror -s $samplesize -f -p $pps -b $packetsize -i $interval -w "VNF_${pps}pps_${packetsize}byte_${interval}_0_${maxi}_${samplesize}.log" &
+	sudo nice -n -20 taskset -c 3 ~/2017-kernel-based-processing-times/code/dummy-vnf/udp-mirror -s $samplesize -f -p $pps -b $packetsize -i $interval -w "VNF_${pps}pps_${packetsize}byte_${interval}_0_${maxi}_${samplesize}_${rand}_${rep}.log" &
 else
-	../example_vnf/udp-mirror -s $samplesize -d ${artificial_delay} -p $pps -b $packetsize -i $interval -w "VNF_${pps}pps_${packetsize}byte_${interval}_${artificial_delay}_${maxi}_${samplesize}.log"	&
+	if [[ ! $rand -eq 0 ]]; then
+		sudo nice -n -20 taskset -c 3 ~/2017-kernel-based-processing-times/code/dummy-vnf/udp-mirror -s $samplesize -d ${artificial_delay} -p $pps -b $packetsize -i $interval -w "VNF_${pps}pps_${packetsize}byte_${interval}_${artificial_delay}_${maxi}_${samplesize}_${rand}_${rep}.log" -r $rand &
+	else
+		sudo nice -n -20 taskset -c 3 ~/2017-kernel-based-processing-times/code/dummy-vnf/udp-mirror -s $samplesize -d ${artificial_delay} -p $pps -b $packetsize -i $interval -w "VNF_${pps}pps_${packetsize}byte_${interval}_${artificial_delay}_${maxi}_${samplesize}_${rand}_${rep}.log" &
+	fi
+
+
 fi
 
+(>&2 echo "VNF started")
+
 # Wait a little for good measure
-sleep 2s
+sleep 5s
 
 # Start the monitoring loop
 while [[ $maxi -eq -1 ]] || [[ $i -le $maxi ]]; do
 	(>&2 echo "$i/$maxi")
 	if [[ $res != *"ACTIVE"* ]]; then
-		echo "$i;$((16#$(cat /proc/net/udp | grep 0:04D2 | awk '{ print $5 }' | cut -d':' -f2)))" >> "BUFFER_${pps}pps_${packetsize}byte_${interval}_${artificial_delay}_${maxi}_${samplesize}.log"
+		echo "$i;$((16#$(cat /proc/net/udp | grep 0:04D2 | awk '{ print $5 }' | cut -d':' -f2)))" >> "BUFFER_${pps}pps_${packetsize}byte_${interval}_${artificial_delay}_${maxi}_${samplesize}_${rand}_${rep}.log"
 		echo start > /proc/vnfinfo_udp
-		./monitor_vnf.sh # This sends SIGUSR1 to the vnf and triggers a sample of $samplesize
+		~/2017-kernel-based-processing-times/scripts/monitor_vnf.sh # This sends SIGUSR1 to the vnf and triggers a sample of $samplesize
 	fi
-	# sleep $(python -c "import numpy; print numpy.random.exponential(scale=$interval)")
-	sleep "$interval"s
+	sleep $(python -c "import numpy; print $interval+numpy.random.exponential(scale=$interval)")
+	#sleep "$interval"s
 	res=$(cat /proc/vnfinfo_udp | tail -n1)
 	# The module is not active, so there is nothing to do.
 	if [[ $res == *"WAITING"* ]]; then
@@ -55,7 +65,7 @@ while [[ $maxi -eq -1 ]] || [[ $i -le $maxi ]]; do
 	    # Print the current sample
 	    ((samplenumber=1))
 	    for sample in $(echo "$res" | tr ';' ' '); do
-		echo "$totalsamples;$i;$samplenumber;$pps;$packetsize;$interval;$artificial_delay;$sample" >> "KERNEL_${pps}pps_${packetsize}byte_${interval}_${artificial_delay}_${maxi}_${samplesize}.log"
+		echo "$totalsamples;$i;$samplenumber;$pps;$packetsize;$interval;$artificial_delay;$sample" >> "KERNEL_${pps}pps_${packetsize}byte_${interval}_${artificial_delay}_${maxi}_${samplesize}_${rand}_${rep}.log"
 		((samplenumber=$samplenumber+1))
 		((totalsamples=$totalsamples+1))
 	    done
@@ -65,7 +75,7 @@ while [[ $maxi -eq -1 ]] || [[ $i -le $maxi ]]; do
 done
 
 # Wait a little for good measure
-sleep 2s
+sleep 5s
 
 # Make sure all counters are reset
 # Reset the samplesize to cbsize
@@ -73,7 +83,15 @@ echo stop > /proc/vnfinfo_udp
 echo -1 > /proc/vnfinfo_udp
 
 # Finally kill the VNF
-kill -SIGINT $(ps aux | grep .\[u]dp-mirror | awk '{ print $2 }')
+pid=$(ps aux | grep .\[u]dp-mirror | awk '{ print $2 }')
+while [[ ! $pid == "" ]]; do
+	for p in $pid; do
+		(>&2 echo "Killing $p")
+		sudo kill -2 $p
+	done
+	sleep 1s
+	pid=$(ps aux | grep .\[u]dp-mirror | awk '{ print $2 }')
+done
 
 # Tell the user we are done
 (>&2 echo "Finished")
