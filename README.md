@@ -54,12 +54,12 @@ A single parameter combination can be executed using the `run_test.sh` script wi
 An example parameter file can be found in `/scripts/params/` and has the following format
 
 ```
-1000 1 0.1 1000 128 0
-1000 1 0.1 1000 128 100
-1000 1 0.1 1000 128 200
-1000 1 0.1 1000 128 300
-1000 1 0.1 1000 128 400
-1000 1 0.1 1000 128 500
+1000 1 0.1 1000 128 0 0
+1000 1 0.1 1000 128 100 0
+1000 1 0.1 1000 128 200 0
+1000 1 0.1 1000 128 300 0
+1000 1 0.1 1000 128 400 0
+1000 1 0.1 1000 128 500 0
 ```
 
 Thereby, the order of parameters is
@@ -70,6 +70,7 @@ Thereby, the order of parameters is
 4. Current load in packets per second
 5. Packet size in byte
 6. Artificial delay to induce by the example VNF
+7. Distribution of processing times (0: Constant, 1: Negative exponential, 2: Uniform, 3: Normal (c=1), 4: Normal (c=0.2))
 
 ## Usage of KOMon without included scripts
 
