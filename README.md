@@ -89,3 +89,11 @@ The user is then able to issue commands be echoing values into the interface fil
 
 For any questions regarding the code please contact [Stefan Geissler](mailto:stefan.geissler@informatik.uni-wuerzburg.de)
 
+## Corresponding Publication
+
+This repository contains the sources used for the work published in
+
+Stefan Geissler, Stanislav Lange, Florian Wamser, Thomas Zinner, Tobias Hoßfeld, “KOMon - Kernel-based Online Monitoring of VNF Packet Processing Times” in Proceedings of the Conference on Networked Systems (NetSys), Munich, Germany, 2019.
+
+
+
